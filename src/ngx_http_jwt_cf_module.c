@@ -211,12 +211,14 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Claim Value %s", jwt_cf_claim_value.data);
 	if (jwt_cf_claim_key.len != 0)
 	{
+		ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Get grant JSON");
 		claim_value = jwt_get_grants_json(jwt, (const char *)jwt_cf_claim_key_uchar);
+		ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "JWT Claim Value %s", claim_value);
 		if (claim_value == NULL)
 		{
 			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "the jwt does not contain claim %V", jwt_cf_claim_key.data);
 		}
-		
+		ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Comparing claim values %s, %s", claim_value, jwt_cf_claim_value.data);
 		else if (ngx_strstr(claim_value, jwt_cf_claim_value.data)==NULL)
 		{
 			ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "the jwt claim does not match the correct value");
