@@ -212,7 +212,7 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 	if (jwt_cf_claim_key.len != 0)
 	{
 		ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Get grant JSON");
-		claim_value = jwt_get_grants_json(jwt, (const char *)jwt_cf_claim_key_uchar);
+		claim_value = jwt_get_grants_json(jwt, "AUD");
 		ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "JWT Claim Value %s", claim_value);
 		if (claim_value == NULL)
 		{
