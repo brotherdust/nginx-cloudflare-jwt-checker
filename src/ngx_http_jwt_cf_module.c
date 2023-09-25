@@ -185,7 +185,7 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 		ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "Could not validate JWT correctly. Try checking error log.");
 		goto redirect;
 	}
-	
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Validating the JWT Algorithm");
 	// validate the algorithm
 	alg = jwt_get_alg(jwt);
 	if (alg != JWT_ALG_HS256 && alg != JWT_ALG_RS256)
@@ -193,7 +193,7 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 		ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "invalid algorithm in jwt %d", alg);
 		goto redirect;
 	}
-	
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Validate the exp date of the JWT");
 	// validate the exp date of the JWT
 	exp = (time_t)jwt_get_grant_int(jwt, "exp");
 	now = time(NULL);
@@ -202,11 +202,13 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 		ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "the jwt has expired");
 		goto redirect;
 	}
-
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Validating the Claim");
 	// validate the claim
 	jwt_cf_claim_key = jwtcf->jwt_cf_claim_key;
 	jwt_cf_claim_value = jwtcf->jwt_cf_claim_value;
 	const u_char * jwt_cf_claim_key_uchar = jwt_cf_claim_key.data;
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Claim Key %s", jwt_cf_claim_key.data);
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Claim Value %s", jwt_cf_claim_value.data);
 	if (jwt_cf_claim_key.len != 0)
 	{
 		claim_value = jwt_get_grants_json(jwt, (const char *)jwt_cf_claim_key_uchar);
@@ -223,6 +225,7 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 			goto redirect;
 		}
 	}
+	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Free JWT");
 	jwt_free(jwt);
 
 	return NGX_OK;
