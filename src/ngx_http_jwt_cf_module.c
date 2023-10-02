@@ -206,7 +206,7 @@ static ngx_int_t ngx_http_jwt_cf_handler(ngx_http_request_t *r)
 	// validate the claim
 	jwt_cf_claim_key = jwtcf->jwt_cf_claim_key;
 	jwt_cf_claim_value = jwtcf->jwt_cf_claim_value;
-	const u_char * jwt_cf_claim_key_uchar = jwt_cf_claim_key.data;
+	//const u_char * jwt_cf_claim_key_uchar = jwt_cf_claim_key.data;
 	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Claim Key %s", jwt_cf_claim_key.data);
 	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "Claim Value %s", jwt_cf_claim_value.data);
 	if (jwt_cf_claim_key.len != 0)
