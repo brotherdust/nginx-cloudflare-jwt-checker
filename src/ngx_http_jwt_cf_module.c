@@ -430,7 +430,7 @@ static char * getJwt(ngx_http_request_t *r, ngx_str_t jwt_cf_validation_type)
 
 		// get the cookie
 		// TODO: the cookie name could be passed in dynamicallly
-		n = ngx_http_parse_multi_header_lines(&r->headers_in.cookies, &jwt_cf_validation_type, &jwtCookieVal);
+		n = ngx_http_parse_multi_header_lines(r, &r->headers_in.cookies, &jwt_cf_validation_type, &jwtCookieVal);
 		if (n != NGX_DECLINED) 
 		{
 			jwtCookieValChrPtr = ngx_str_t_to_char_ptr(r->pool, jwtCookieVal);
