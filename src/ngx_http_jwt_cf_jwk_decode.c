@@ -75,24 +75,88 @@ BIGNUM* bignum_base64_decode(ngx_pool_t *pool, u_char* base64bignum, int* len) {
 }
 
 
+// u_char *jwk_to_pem_u_char(ngx_pool_t *pool, struct pubkey_t pubkey) {
+//     int *mod_hex_len = ngx_palloc(pool, sizeof(int));
+//     u_char* n_url_decode = base64_urlsafe_to_standard(pool, pubkey.modulus);
+//     BIGNUM *n = bignum_base64_decode(pool, n_url_decode, mod_hex_len);
+//     int *exp_hex_len = ngx_palloc(pool, sizeof(int));
+//     BIGNUM *e = bignum_base64_decode(pool, (u_char *)pubkey.exponent, exp_hex_len);
+//     RSA *RSAkey = RSA_new();
+//     RSA_set0_key(RSAkey, n, e, NULL);
+//     BIO* buf = BIO_new(BIO_s_mem());
+//     PEM_write_bio_RSA_PUBKEY(buf, RSAkey);
+//     u_char *p;
+//     int readSize = (int)BIO_get_mem_data(buf, &p);
+//     u_char * dest = ngx_pcalloc(pool, readSize);
+//     ngx_memcpy(dest, p, readSize);
+//     ngx_pfree(pool, p);
+//     ngx_pfree(pool, n_url_decode);
+//     ngx_pfree(pool, mod_hex_len);
+//     ngx_pfree(pool, exp_hex_len);
+//     BIO_free_all(buf);
+//     return dest;
+// }
+
 u_char *jwk_to_pem_u_char(ngx_pool_t *pool, struct pubkey_t pubkey) {
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char nbuf[256], ebuf[256]; // Assuming 2048-bit RSA keys
+    OSSL_PARAM params[4], *param_ptr = params;
+
     int *mod_hex_len = ngx_palloc(pool, sizeof(int));
     u_char* n_url_decode = base64_urlsafe_to_standard(pool, pubkey.modulus);
     BIGNUM *n = bignum_base64_decode(pool, n_url_decode, mod_hex_len);
+    int nlen = BN_bn2bin(n, nbuf);
+
     int *exp_hex_len = ngx_palloc(pool, sizeof(int));
     BIGNUM *e = bignum_base64_decode(pool, (u_char *)pubkey.exponent, exp_hex_len);
-    RSA *RSAkey = RSA_new();
-    RSA_set0_key(RSAkey, n, e, NULL);
+    int elen = BN_bn2bin(e, ebuf);
+
+    *param_ptr++ = OSSL_PARAM_construct_BN("n", nbuf, nlen);
+    *param_ptr++ = OSSL_PARAM_construct_BN("e", ebuf, elen);
+    *param_ptr = OSSL_PARAM_construct_end();
+
+    // Create a new EVP_PKEY context for the RSA key type
+    ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+    if (ctx == NULL) {
+        // Handle error
+        return NULL;
+    }
+
+    // Allocate a new EVP_PKEY structure
+    pkey = EVP_PKEY_new();
+    if (pkey == NULL) {
+        // Handle error
+        EVP_PKEY_CTX_free(ctx);
+        return NULL;
+    }
+
+    // Initialize the context for key generation and generate the RSA key
+    if (EVP_PKEY_fromdata_init(ctx) <= 0 ||
+        EVP_PKEY_fromdata(ctx, &pkey, EVP_PKEY_KEYPAIR, params) <= 0) {
+        // Handle error
+        EVP_PKEY_free(pkey);
+        EVP_PKEY_CTX_free(ctx);
+        return NULL;
+    }
+
     BIO* buf = BIO_new(BIO_s_mem());
-    PEM_write_bio_RSA_PUBKEY(buf, RSAkey);
-    u_char *p;
-    int readSize = (int)BIO_get_mem_data(buf, &p);
+    PEM_write_bio_PUBKEY(buf, pkey);
+
+    u_char *pem_data;
+    int readSize = (int)BIO_get_mem_data(buf, &pem_data);
     u_char * dest = ngx_pcalloc(pool, readSize);
-    ngx_memcpy(dest, p, readSize);
-    ngx_pfree(pool, p);
+    ngx_memcpy(dest, pem_data, readSize);
     ngx_pfree(pool, n_url_decode);
     ngx_pfree(pool, mod_hex_len);
     ngx_pfree(pool, exp_hex_len);
     BIO_free_all(buf);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
     return dest;
 }
+
+
+
+
+
