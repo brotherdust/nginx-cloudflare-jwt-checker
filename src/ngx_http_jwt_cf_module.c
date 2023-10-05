@@ -402,7 +402,6 @@ static char * getJwt(ngx_http_request_t *r, ngx_str_t jwt_cf_validation_type)
 	ngx_table_elt_t *authorizationHeader;
 	char* jwtCookieValChrPtr = NULL;
 	ngx_str_t jwtCookieVal;
-	ngx_int_t n;
 	ngx_str_t authorizationHeaderStr;
 
 	ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0, "jwt_cf_validation_type.len %d", jwt_cf_validation_type.len);
